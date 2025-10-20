@@ -1,0 +1,83 @@
+# import yaml
+# from yaml.loader import SafeLoader
+import streamlit as st
+from utils import connect_redis
+import streamlit_authenticator as stauth
+
+rds = connect_redis()
+
+page = st.set_page_config(page_title="收支表", layout="centered")
+
+@st.cache_data
+def get_user_data():
+    pipe = rds.pipeline()
+    keys_ = rds.keys("usernames:*")
+    for i in keys_:
+        pipe.hgetall(i)
+    usernames = pipe.execute()
+    usernames = [{"username":"admin","password":"0313","email":"abc@gmail.com"}]
+    config = {
+        "credentials": {
+            "usernames" : {
+                user['username']:{
+                    "name":user['username'],
+                    "password":user['password'],
+                    "email":user['email'],
+                } for user in usernames
+            },
+        },
+        "cookie": {
+            "expiry_days": 30,
+            "key": "erp_streamlit",
+            "name": "erp_streamlit_expenses",
+
+        }
+    }
+    return config
+
+config = get_user_data()
+
+if config is None:
+    st.stop()
+main_form = st.container()    
+main_box = st.container(border=False, vertical_alignment="center", horizontal_alignment="center")
+popup = main_box.empty()
+submain = main_box.container(border=False, width=500, height=800, vertical_alignment="center")
+
+
+st.sidebar.write(st.session_state)
+show_exp = st.Page("sidebar/show_exp.py", title="列表")
+pg = st.navigation([show_exp])
+# pg = st.navigation({"主页": [show_exp,create_exp]})
+
+with submain:
+    # 直接用返回的 config
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+    )
+
+    fields = {
+        "Form name": "로그인",
+        "Username": "사용자 이름",
+        "Password": "비밀번호",
+        "Login": "로그인"
+    }
+
+    try:
+        authenticator.login(location="main", fields=fields)
+
+    except Exception as e:
+        st.error(f"로그인 오류: {e}")
+
+if st.session_state["authentication_status"]:
+    with st.sidebar.container(border=False, horizontal_alignment="right"):
+        authenticator.logout("로그아웃", "main")
+    with main_form:    
+        pg.run()
+elif st.session_state["authentication_status"] is False:
+    submain.error("Username/password is incorrect")
+else:
+    submain.warning("로그인 아이디와 비밀번호를 입력하세요")        

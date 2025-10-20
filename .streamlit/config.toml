@@ -1,0 +1,16 @@
+[server]
+runOnSave = true
+
+[theme]
+primaryColor = "#174C4f"
+secondary = "#B0B0B0"
+baseRadius="1rem"
+
+headingFontSizes = ["1.7rem","1.5rem","1.2rem","1rem"]
+
+[ui]
+hideTopBar = true
+
+[client]
+toolbarMode = "viewer"
+
