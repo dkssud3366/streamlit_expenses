@@ -8,8 +8,7 @@ from redis.commands.search.query import Query,NumericFilter
 import time
 
 rds = connect_redis()
-print(">>>>>>>>>>>>>>>>>>>>>>>")
-# 从 redis 回传支出表数据
+
 def get_exp_data(expense=None,income=None,start_date=None,end_date=None):
     # search_content = f"@type:{{{expense|income}}}"
     # query = Query(search_content) \
